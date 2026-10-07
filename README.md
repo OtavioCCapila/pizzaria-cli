@@ -1,124 +1,130 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Pizzaria do Tavim
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Aplicação de linha de comando (CLI) para uma pizzaria. O cliente pode criar uma conta, entrar, montar uma pizza, fazer pedidos e consultar seus pedidos e dados de conta. A aplicação foi construída com NestJS e persiste os dados em PostgreSQL.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Funcionalidades
 
-## Description
+- Cadastro e login de clientes.
+- Senhas armazenadas como hash usando `bcrypt`.
+- Criação de pedidos com tamanho, sabor e borda escolhidos no catálogo.
+- Consulta do histórico de pedidos e dos dados da conta.
+- Navegação interativa pelo terminal.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tecnologias e bibliotecas
 
-## Project setup
+### Aplicação
 
-```bash
-$ npm install
-```
+| Biblioteca | Uso |
+| --- | --- |
+| [NestJS](https://nestjs.com/) (`@nestjs/common`, `@nestjs/core`) | Estrutura a aplicação em módulos e serviços e fornece injeção de dependências. O processo inicia um contexto Nest sem servidor HTTP. |
+| `@nestjs/config` e `dotenv` | Disponibilizam as configurações do ambiente, incluindo as credenciais do banco. |
+| `@nestjs/typeorm` e `typeorm` | Integram o NestJS ao ORM, mapeiam entidades para tabelas e executam consultas e migrações. |
+| `pg` | Driver de conexão do PostgreSQL usado pelo TypeORM. |
+| `@inquirer/prompts` | Cria menus, campos de texto, entradas de senha e confirmações interativas no terminal. |
+| `cli-table3` | Formata os dados da conta e os pedidos em tabelas no terminal. |
+| `figlet` | Exibe o banner ASCII da aplicação. |
+| `ora` | Exibe indicadores de progresso durante operações como cadastro, login e criação de pedido. |
+| `bcrypt` | Gera e compara hashes de senha. |
+| `reflect-metadata` e `rxjs` | Dependências de suporte usadas pelo ecossistema NestJS. |
 
-## Compile and run the project
+### Desenvolvimento e testes
 
-```bash
-# development
-$ npm run start
+- **TypeScript** (`typescript`, `ts-node`, `ts-loader`): tipagem e execução/compilação do código.
+- **Nest CLI** (`@nestjs/cli`, `@nestjs/schematics`): comandos de desenvolvimento e build.
+- **Jest**, `ts-jest`, `@nestjs/testing` e **Supertest**: infraestrutura para testes unitários e end-to-end.
+- **Oxlint** e **Prettier**: lint e formatação.
+- `tsconfig-paths` e `source-map-support`: suporte à execução e depuração.
 
-# watch mode
-$ npm run start:dev
+## Arquitetura
 
-# production mode
-$ npm run start:prod
-```
+O ponto de entrada em `src/main.ts` cria um contexto de aplicação com `NestFactory.createApplicationContext`, obtém o `CliService`, executa o loop do CLI e fecha o contexto ao sair. Não há servidor HTTP iniciado.
 
-## Run tests
+`AppModule` é o módulo raiz: carrega as configurações, configura a conexão TypeORM e agrega os módulos de CLI, usuários, autenticação, catálogo e pedidos. Os módulos organizam responsabilidades e expõem serviços ou repositórios por injeção de dependências.
 
-```bash
-# unit tests
-$ npm run test
+### Fluxo do CLI
 
-# e2e tests
-$ npm run test:e2e
+`CliService` controla a navegação por estados (`CliState`) e delega cada tela ao menu correspondente:
 
-# test coverage
-$ npm run test:cov
-```
+1. O menu principal oferece login, cadastro e saída.
+2. Após autenticar, o menu do cliente oferece criação de pedido, histórico e dados da conta.
+3. Para montar a pizza, a aplicação carrega tamanhos, sabores e bordas do banco, calcula o total a partir dos preços selecionados e salva o pedido após a confirmação.
+4. O histórico apresenta os pedidos do cliente com os dados relacionados do catálogo.
 
-## Deployment
+### Módulos e persistência
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- `src/modules/cli`: loop de navegação, estados, banner e telas do terminal.
+- `src/modules/auth`: cadastro, autenticação e sessão em memória. `UserRepository` concentra as operações de persistência de usuários.
+- `src/modules/user`: acesso aos usuários e tipos associados.
+- `src/modules/pizza`: consulta dos tamanhos, sabores e bordas disponíveis.
+- `src/modules/order`: criação e consulta de pedidos, separando serviço e repositório.
+- `src/database/entities`: entidades TypeORM de usuários, pedidos e itens do catálogo.
+- `src/database/migrations`: criação das tabelas e relacionamentos do banco.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Um pedido referencia um usuário, um tamanho, um sabor e uma borda. A sessão atual é mantida somente em memória; encerrar o processo encerra a sessão. O TypeORM está configurado com `synchronize: false`, portanto o esquema é controlado por migrações.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Requisitos
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- Node.js e npm.
+- Docker com Docker Compose, ou uma instância PostgreSQL acessível.
 
-## Observability
+## Configuração e execução
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+1. Instale as dependências:
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+   ```bash
+   npm install
+   ```
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+2. Inicie o PostgreSQL local fornecido pelo projeto:
 
-To add it to this project:
+   ```bash
+   docker compose up -d postgres
+   ```
 
-```bash
-$ npm install @nestjs/observe
-```
+3. Crie um arquivo `.env` na raiz do projeto com as configurações lidas por `src/database/database.config.ts`:
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
+   ```dotenv
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_USERNAME=pizzaria_user
+   DB_PASSWORD=pizzaria_password
+   DB_NAME=pizzaria_db
+   ```
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+   Esses valores correspondem ao serviço PostgreSQL definido em `docker-compose.yml`. Se usar outro banco ou credenciais, ajuste as variáveis conforme necessário.
 
-## Resources
+4. Crie as tabelas e relacionamentos:
 
-Check out a few resources that may come in handy when working with NestJS:
+   ```bash
+   npm run migration:run
+   ```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+5. Cadastre opções nas tabelas `pizza_size`, `pizza_topping` e `pizza_border`. As migrações criam essas tabelas, mas não inserem dados de catálogo; elas precisam ter registros para que o fluxo de criação de pedido apresente opções.
 
-## Support
+6. Inicie a aplicação:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+   ```bash
+   npm run start:dev
+   ```
 
-## Stay in touch
+## Comandos disponíveis
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+| Comando | Descrição |
+| --- | --- |
+| `npm run start` | Inicia a aplicação. |
+| `npm run start:dev` | Inicia em modo de desenvolvimento com watch. |
+| `npm run start:debug` | Inicia em modo de desenvolvimento com depuração. |
+| `npm run start:prod` | Executa a versão compilada em `dist/`. |
+| `npm run build` | Compila o projeto. |
+| `npm run format` | Formata os arquivos TypeScript de `src/` e `test/`. |
+| `npm run lint` | Executa o Oxlint em `src/` e `test/`. |
+| `npm test` | Executa os testes Jest. |
+| `npm run test:watch` | Executa os testes em modo watch. |
+| `npm run test:cov` | Executa os testes com cobertura. |
+| `npm run test:e2e` | Executa os testes end-to-end. |
+| `npm run migration:run` | Aplica migrações pendentes. |
+| `npm run migration:revert` | Reverte a última migração aplicada. |
+| `npm run migration:create -- src/database/migrations/NomeDaMigracao` | Cria um arquivo de migração. |
+| `npm run migration:generate -- src/database/migrations/NomeDaMigracao` | Gera uma migração a partir das diferenças do modelo e do banco. |
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Os comandos de migração usam a configuração de `src/database/data-source.ts` e também dependem das variáveis de banco definidas no `.env`.
